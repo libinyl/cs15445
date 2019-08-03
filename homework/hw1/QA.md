@@ -89,3 +89,49 @@ from (select city, station_name, count(distinct (id)) as station_trip_count
 - Details: 
   - For the dates with the top 10 average duration, print the date and the average bike duration on that date (in seconds, round to four decimal places using the ROUND() function). 
   - Sort by the average duration, decreasing. 
+
+## Q6 OVERLAPPING TRIPS
+
+One of the possible data-entry errors is to record a bike as being used in two different trips, at the same time. Thus, we want to spot pairs of overlapping intervals (start time, end time). To keep the output manageable, we ask you to do this check for bikes with id between 100 and 200 (both inclusive). Note: Assume that no trip has negative time, i.e., for all trips, start time <= end time.
+Details: For each conflict (a pair of conflict trips), print the bike id, former trip id, former start time, former end time, latter trip id, latter start time, latter end time. Sort by bike id (increasing), break ties with former trip id (increasing) and then latter trip id (increasing).
+
+Hint: (1) Report each conflict pair only once, so that former trip id < latter trip id. (2) We give you the (otherwise tricky) condition for conflicts: start1 < end2 AND end1 > start2
+
+## Q7 MULTI CITY BIKES
+
+- Find all the bikes that have been to more than one city. 
+- A bike has been to a city as long as the start station or end station in one of its trips is in that city.
+ 
+- Details: 
+  - For each bike that has been to more than one city, print the bike id and the number of cities it has been to.
+  - Sort by the number of cities (decreasing), then bike id (increasing).
+
+## Q8 BIKE_POPULARITY_BY_WEATHER
+
+- Find what is the average number of trips made per day on each type of weather day. 
+- The type of weather on a day is specified by weather.events, such as 'Rain', 'Fog' and so on. 
+- For simplicity, we consider all days that does not have a weather event (weather.events = '\N') as a single type of weather. 
+- Here a trip belongs to a date only if its start time is on that date. 
+- We use the weather at the starting position of that trip as its weather type as well. 
+- There are also 'Rain' and 'rain' in weather.events. For simplicity, we consider them as different types of weathers.
+- When counting the total number of days for a weather, we consider a weather happened on a date as long as it happened in at least one region on that date.
+
+- Details: 
+  - Print the name of the weather and the average number of trips made per day on that type of weather (round to four decimal places using ROUND()). 
+  - Sort by the average number of trips (decreasing), then weather name (increasing).
+
+## Q9 TEMPERATURE_SHORTER_TRIPS
+- A short trip is a trip whose duration is <= 60 seconds. 
+- Compute the average temperature that a short trip starts versus the average temperature that a non-short trip starts. 
+- We use weather.mean_temp on the date of the start time as the Temperature measurement.
+
+- Details: 
+  - Print the average temperature that a short trip starts and the average temperature that a non-short trip starts. (on the same row, and both round to four decimal places using ROUND()) Please refer to the updated note before Q1 when calculating the duration of a trip.
+
+## Q10 RIDING_IN_STORM
+
+- For each zip code that has experienced 'Rain-Thunderstorm' weather, find the station that has the most number of trips in that zip code under the storm weather. 
+- For simplicity, we only consider the start time of a trip when deciding the station and the weather for that trip.
+
+- Details: Print the zip code that has experienced the 'Rain-Thunderstorm' weather, the name of the station that has the most number of trips under the strom weather in that zip code, and the total number of trips that station has under the storm weather. 
+- Sort by the zip code (increasing). You do not need to print the zip code that has experienced 'Rain-Thunderstorm' weather but no trip happens on any storm day in that zip code.
