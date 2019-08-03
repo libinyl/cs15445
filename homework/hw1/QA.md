@@ -1,6 +1,9 @@
 ## 下载链接
 
-`bike_sharing.db`:
+`bike_sharing.db`
+```
+wget https://15445.courses.cs.cmu.edu/fall2018/files/bike_sharing.tar.gz
+```
 
 ## Q1 Count the number of cities.
 ```sql
