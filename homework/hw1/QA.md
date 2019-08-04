@@ -126,38 +126,132 @@ with date_tbl as (select date(start_time) as date_col
 
 ## Q6 OVERLAPPING TRIPS
 
-One of the possible data-entry errors is to record a bike as being used in two different trips, at the same time. Thus, we want to spot pairs of overlapping intervals (start time, end time). To keep the output manageable, we ask you to do this check for bikes with id between 100 and 200 (both inclusive). Note: Assume that no trip has negative time, i.e., for all trips, start time <= end time.
-Details: For each conflict (a pair of conflict trips), print the bike id, former trip id, former start time, former end time, latter trip id, latter start time, latter end time. Sort by bike id (increasing), break ties with former trip id (increasing) and then latter trip id (increasing).
+- One of the possible data-entry errors is to record a bike as being used in two different trips, at the same time. 
+- 可能发生是数据错误之一是,在同一时间,在两个不同的 trip 记录了同一辆车.
+- Thus, we want to spot pairs of overlapping intervals (start time, end time). 
+- 因此,我们想检测出重叠时间间隔数对.
+- To keep the output manageable, we ask you to do this check for bikes with id between 100 and 200 (both inclusive). 
+- 为了便于管理输出,只需做处于从 100 到 200 的 bike_id.
+- Note: Assume that no trip has negative time, i.e., for all trips, start time <= end time.
+- 注意,假设所有的 trip 时间值都是正值
 
-Hint: (1) Report each conflict pair only once, so that former trip id < latter trip id. (2) We give you the (otherwise tricky) condition for conflicts: start1 < end2 AND end1 > start2
+- Hint: 
+  - Report each conflict pair only once, so that former trip id < latter trip id.
+  - We give you the (otherwise tricky) condition for conflicts: start1 < end2 AND end1 > start2
+
+- Details: For each conflict (a pair of conflict trips), print the 
+    - bike id, 
+    - former trip id, 
+    - former start time, 
+    - former end time, 
+    - latter trip id, 
+    - latter start time, 
+    - latter end time. 
+    - Sort by bike id (increasing), 
+    - break ties with former trip id (increasing) and then latter trip id (increasing).
+
+```sql
+with confs as (select id, start_time, end_time, bike_id from trip)
+    select
+     c1.bike_id,
+     c1.id,
+     c1.start_time,
+     c2.end_time,
+     c2.id,
+     c2.start_time,
+     c2.end_time
+    from
+     confs as c1,
+     confs as c2
+    where
+     c1.bike_id >= 100 and c1.bike_id <= 200 and c2.bike_id >= 100 and c2.bike_id <= 200 and c1.bike_id = c2.bike_id and
+     c1.id < c2.id and c1.start_time < c2.end_time and c1.end_time > c2.start_time
+    order by
+     c1.bike_id asc,
+     c1.id asc,
+     c2.id asc;
+```
+优化:如果值位于某个区间,可以用 between 来替换.
+
+
+
 
 ## Q7 MULTI CITY BIKES
 
 - Find all the bikes that have been to more than one city. 
+- 找到所有在多个城市停留的车.
 - A bike has been to a city as long as the start station or end station in one of its trips is in that city.
+- trip 的开始或结束的站点的城市,就是车停留过的城市.
  
 - Details: 
   - For each bike that has been to more than one city, print the bike id and the number of cities it has been to.
+  - 对于每辆停留过多个城市的车,打印出 bikd id 和它停留过的城市.
   - Sort by the number of cities (decreasing), then bike id (increasing).
+
+```sql
+select bike_id, count(city) as num_cities
+from trip,
+     station
+where station_id = start_station_id
+   or station_id = end_station_id
+
+group by bike_id
+having count(city) > 1
+order by num_cities desc,bike_id asc;
+```
 
 ## Q8 BIKE_POPULARITY_BY_WEATHER
 
 - Find what is the average number of trips made per day on each type of weather day. 
+- 每个类别的天气下,每天平均有多少行程数量?
 - The type of weather on a day is specified by weather.events, such as 'Rain', 'Fog' and so on. 
+- 每天的天气类型被 weather.events 所指定,如"Rain","Fog"等.
 - For simplicity, we consider all days that does not have a weather event (weather.events = '\N') as a single type of weather. 
+- 简便起见,没有天气记录也看做一种类型.
 - Here a trip belongs to a date only if its start time is on that date. 
+- 行程所对应的日期,由此日期的开始时间确定.
 - We use the weather at the starting position of that trip as its weather type as well. 
+- 使用行程的开始位置的天气作为天气类型.
 - There are also 'Rain' and 'rain' in weather.events. For simplicity, we consider them as different types of weathers.
+- 简便起见,把'Rain'和'rain'看做不同类型的天气.
 - When counting the total number of days for a weather, we consider a weather happened on a date as long as it happened in at least one region on that date.
+- 当计算某种天气的日期数量时,只要此天气在此日期发生在至少在一个区域,就认为此天气在此日期发生.
 
 - Details: 
   - Print the name of the weather and the average number of trips made per day on that type of weather (round to four decimal places using ROUND()). 
   - Sort by the average number of trips (decreasing), then weather name (increasing).
 
+```sql
+with weather_days(events, cnt) AS
+         (SELECT w.events,
+                 count(distinct w.date) AS cnt
+          FROM weather w
+          GROUP BY w.events)
+    SELECT
+     w.events,
+     round(cast(count(distinct t.id) AS float) / cast(wd.cnt AS float),
+           4) AS avg
+    FROM
+     trip t,
+     station s,
+     weather w,
+     weather_days wd
+    WHERE
+     t.start_station_id = s.station_id
+         AND s.zip_code = w.zip_code
+         AND date(t.start_time) = w.date
+         AND w.events = wd.events
+    GROUP BY
+     w.events;
+```
+
 ## Q9 TEMPERATURE_SHORTER_TRIPS
 - A short trip is a trip whose duration is <= 60 seconds. 
+- short trip 定义为时间<=60 秒的 trip.
 - Compute the average temperature that a short trip starts versus the average temperature that a non-short trip starts. 
+- 计算短途旅行开始时的平均温度和非短途旅行开始时的平均温度.
 - We use weather.mean_temp on the date of the start time as the Temperature measurement.
+- 用开始时间的 weather.mean_temp来代表温度测量.
 
 - Details: 
   - Print the average temperature that a short trip starts and the average temperature that a non-short trip starts. (on the same row, and both round to four decimal places using ROUND()) Please refer to the updated note before Q1 when calculating the duration of a trip.
