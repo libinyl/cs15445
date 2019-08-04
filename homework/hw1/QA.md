@@ -90,6 +90,40 @@ from (select city, station_name, count(distinct (id)) as station_trip_count
   - For the dates with the top 10 average duration, print the date and the average bike duration on that date (in seconds, round to four decimal places using the ROUND() function). 
   - Sort by the average duration, decreasing. 
 
+
+```sql
+-- dates, avg_duration
+-- dates: 所有在 trip 中出现过的 start_time,end_time,去重。union 会自动去重。
+-- avg_duration: sum(当天所有行程的所有有效时间)/count(bike_id<=100)
+-- 当天所有行程的有效时间：v_end_time-v_start_time
+-- 有效结束时间：v_end_time = min(end_time, dates+1 day)
+-- 有效开始时间：v_start_time = max(start_time, dates)
+with date_tbl as (select date(start_time) as date_col
+                  from trip
+                  union
+                  select date(end_time) as date_col
+                  from trip)
+    select
+     date_col,
+     round(sum(strftime('%s', min(datetime(end_time), datetime(date_col, '+1 day'))) -
+               strftime('%s', max(datetime(start_time), datetime(date_col)))) * 1.0 /
+           (select count(1) from trip where bike_id <= 100), 4)
+         as avg_duration
+    from
+     trip,
+     date_tbl
+    where
+     trip.bike_id <= 100
+         and datetime(trip.start_time) < datetime(date_tbl.date_col, '+1 day')
+         and datetime(trip.end_time) > datetime(date_tbl.date_col)
+    group by
+     date_col
+    order by
+     avg_duration desc limit
+     10;
+
+```
+
 ## Q6 OVERLAPPING TRIPS
 
 One of the possible data-entry errors is to record a bike as being used in two different trips, at the same time. Thus, we want to spot pairs of overlapping intervals (start time, end time). To keep the output manageable, we ask you to do this check for bikes with id between 100 and 200 (both inclusive). Note: Assume that no trip has negative time, i.e., for all trips, start time <= end time.
